@@ -2,7 +2,12 @@
 
 ## Description
 
-This repository holds all the necessary files needed to install my configurations and settings on a new Linux machine.
+This repository holds all the necessary files needed to install my configurations and settings on a new Linux based distribution.
+
+There are currently two branches:
+
+* **master** : Ubuntu  -- Debian based with Gnome desktop enviroment
+* **manjaro**: Manjaro -- Arch based with Gnome desktop enviroment
 
 ### Instructions
 
