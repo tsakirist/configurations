@@ -61,7 +61,7 @@ function _checkfile() {
 function _checkcommand() {
     if ! command -v $1 > /dev/null 2>&1; then
         echo -e "${thunder} Installing required package ${bold}${red}${1}${reset} ..."
-        sudo apt install -y $1
+        sudo pacman -S --needed --noconfirm $1
     fi
 }
 
@@ -76,6 +76,18 @@ function _print() {
         echo -e "${thunder} ${action} ${bold}${red}${*:2}${reset} ..."
     fi
 }
+
+# Required to build packages from AUR
+function _basedevel() {
+    sudo pacman -S --needed --noconfirm base-devel > /dev/null 2>&1
+}
+
+# Aur/Pacman wrapper
+function _yay() {
+    _print i "yay"
+    sudo pacman -S --needed --noconfirm yay
+}
+
 
 function _change_shell() {
     local shell
@@ -130,7 +142,7 @@ function _bashconfig() {
 
 function _zsh() {
     _print i "zsh"
-    sudo apt install -y zsh
+    sudo pacman -S --needed --noconfirm zsh
     local msg="Would you like to change the default shell to zsh?\nThis will issue 'chsh -s $(which zsh)' command."
     if (whiptail --title "Change shell" --yesno "${msg}" 8 78); then
         chsh -s $(which zsh)
@@ -175,7 +187,7 @@ function _omz() {
 
 function _vim() {
     _print i "vim"
-    sudo apt install -y vim vim-gnome
+    sudo pacman -S --needed --noconfirm vim
 }
 
 function _vimrc() {
@@ -187,10 +199,7 @@ function _vimrc() {
 
 function _nvim() {
     _print i "neovim"
-    # sudo sh -c 'echo "deb http://ppa.launchpad.net/neovim-ppa/stable/ubuntu bionic main" > \
-    #             /etc/apt/sources.list.d/neovim.list'
-    sudo add-apt-repository ppa:neovim-ppa/stable -y
-    sudo apt update && sudo apt install -y neovim
+    sudo pacman -S --needed --noconfirm neovim
 }
 
 function _nvimrc() {
@@ -204,7 +213,7 @@ function _nvimrc() {
 
 function _tmux() {
     _print i "tmux"
-    sudo apt install -y tmux
+    sudo pacman -S --needed --noconfirm tmux
 }
 
 function _tmuxconfig() {
@@ -215,10 +224,13 @@ function _tmuxconfig() {
 
 function _sublimetext() {
     _print i "SublimeText 3"
-    wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | sudo apt-key add -
-    sudo sh -c 'echo "deb https://download.sublimetext.com/ apt/stable/" > \
-                /etc/apt/sources.list.d/sublime-text.list'
-    sudo apt update && sudo apt install -y sublime-text
+    curl -O https://download.sublimetext.com/sublimehq-pub.gpg && sudo pacman-key --add sublimehq-pub.gpg \
+    && sudo pacman-key --lsign-key 8A8F901A && rm sublimehq-pub.gpg
+    if ! grep -q "[sublime-text]" /etc/pacman.conf; then
+        echo -e "\n[sublime-text]\nServer = https://download.sublimetext.com/arch/stable/x86_64" \
+        | sudo tee -a /etc/pacman.conf
+    fi
+    sudo pacman -Syu sublime-text
 }
 
 function _sublimesettings() {
@@ -251,37 +263,33 @@ function _sublimeconfig() {
 
 function _vscode() {
     _print i "Visual Studio Code"
-    curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-    sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/ && rm -f microsoft.gpg
-    sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main" > \
-                /etc/apt/sources.list.d/vscode.list'
-    sudo apt update && sudo apt install -y code
+    _checkcommand yay &&_basedevel
+    yay -S --noconfirm --needed visual-studio-code-bin 
 }
 
 function _googlechrome() {
     _print i "Google Chrome"
-    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -O /tmp/google_chrome.deb
-    sudo dpkg -i /tmp/google_chrome.deb
-    # Remove google chrome keyring pop-up
-    sudo sed -i '/^Exec=/s/$/ --password-store=basic %U/' "/usr/share/applications/google-chrome.desktop"
+    _checkcommand yay && _basedevel
+    yay -S --needed --noconfirm google-chrome
 }
 
 function _neofetch() {
     _print i "neofetch"
-    sudo apt install -y neofetch
+    sudo pacman -S --needed --noconfirm neofetch
 }
 
 function _xclip() {
     _print i "xclip"
-    sudo apt install -y xclip
+    sudo pacman -S --needed --noconfirm xclip
 }
 
 function _powerline() {
     _print i "powerline"
-    sudo apt install -y python-pip
-    pip install powerline-status
-    pip install powerline-gitstatus
-    sudo apt install -y fonts-powerline
+    # sudo pacman -S --needed --noconfirm python-pip
+    # pip install powerline-status
+    # pip install powerline-gitstatus
+    sudo pacman -S --needed --noconfirm powerline
+    sudo pacman -S --needed --noconfirm powerline-fonts
 }
 
 function _powerlineconfig() {
@@ -314,55 +322,57 @@ function _dconf() {
 
 function _preload() {
     _print i "preload"
-    sudo apt install -y preload
+    sudo pacman -S --needed --noconfirm preload
 }
 
 function _vmswappiness() {
     _print c "vm.swappiness to 10"
-    echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf > /dev/null 2>&1;
-    echo "Swappiness value:" $(cat /proc/sys/vm/swappiness)
+    local file="/etc/sysctl.d/100-vm-swappiness.conf"
+    if [ ! -f $file ]; then
+        echo "vm.swappiness=10" | sudo tee $file
+        sudo sysctl --system
+    fi
+    echo "Current swappiness value:" $(cat /proc/sys/vm/swappiness)
 }
 
 function _cmake() {
     _print i "cmake"
-    sudo apt install -y cmake
+    sudo pacman -S --needed --noconfirm cmake
 }
 
 function _tree() {
     _print i "tree"
-    sudo apt install -y tree
+    sudo pacman -S --needed --noconfirm tree
 }
 
 function _htop() {
     _print i "htop"
-    sudo apt install -y htop
+    sudo pacman -S --needed --noconfirm htop
 }
 
 function _gnometweaks() {
     _print i "gnome-tweaks"
-    sudo apt install -y gnome-tweaks
+    sudo pacman -S --needed --noconfirm gnome-tweaks
 }
 
 function _gnomeshellextensions() {
-    _print i "gnome-shell-extensions"
-    sudo apt install -y gnome-shell-extension-weather gnome-shell-extension-dashtodock
+    print i "gnome-shell-extensions"
+    # Future additions of extensions should be added here
 }
 
 function _java() {
     _print i "java and javac"
-    sudo apt install -y default-jre default-jdk
+    sudo pacman -S --needed --noconfirm jdk-openjdk jre-openjdk
+
 }
 
 function _tilix() {
     _print i "tilix: a terminal emulator"
-    sudo add-apt-repository ppa:webupd8team/terminix -y
-    # sudo sh -c 'echo "deb http://ppa.launchpad.net/webupd8team/terminix/ubuntu bionic main" > \
-    #         /etc/apt/sources.list.d/webupd8team-ubuntu-terminix-bionic.list'
-    sudo apt update && sudo apt install -y tilix
+    sudo pacman -S --needed --noconfirm tilix
 }
 
 function _setwlp() {
-    local path="wallpapers/1.jpg" # my custom default wallpaper
+    local path="wallpapers/1.jpg"
     _checkfile $path
     local file="'file://$(readlink -e "${path}")'"
     _print s "Wallpaper ${FILE}"
@@ -371,7 +381,7 @@ function _setwlp() {
 
 function _installfonts() {
     _print i "fonts"
-    sudo apt install fonts-firacode
+    sudo pacman -S --needed --noconfirm otf-fira-code
 }
 
 function _fzfconfig() {
@@ -388,20 +398,17 @@ function _fzf() {
 
 function _fd() {
     _print i "fd: an improved version of find"
-    wget -q https://github.com/sharkdp/fd/releases/download/v7.4.0/fd-musl_7.4.0_amd64.deb -O /tmp/fd.deb
-    sudo dpkg -i /tmp/fd.deb
+    sudo pacman -S --needed --noconfirm fd
 }
 
 function _bat() {
     _print i "bat: a clone of cat with syntax highlighting"
-    wget -q https://github.com/sharkdp/bat/releases/download/v0.12.1/bat-musl_0.12.1_amd64.deb -O /tmp/bat.deb
-    sudo dpkg -i /tmp/bat.deb
+    sudo pacman -S --needed --noconfirm bat
 }
 
 function _rg() {
     _print i "rg: ripgrep recursive search for a pattern in files"
-    wget -q https://github.com/BurntSushi/ripgrep/releases/download/11.0.2/ripgrep_11.0.2_amd64.deb -O /tmp/rg.deb
-    sudo dpkg -i /tmp/rg.deb
+    sudo pacman -S --needed --noconfirm ripgrep
 }
 
 function _checkroot() {
@@ -424,7 +431,7 @@ function _showmenu() {
         is_root="yes"
     fi
     INPUT=$(whiptail --title "This script provides an easy way to install my packages and my configurations." \
-        --menu "\nScript is executed from $(pwd)\n-- root privileges: ${is_root}" ${SIZE} $((ROWS-10)) \
+        --menu "\nScript is executed from $(pwd)" ${SIZE} $((ROWS-10)) \
         "1"  "    Fresh installation" \
         "2"  "    Selective installation" \
         "Q"  "    Quit" \
@@ -435,8 +442,8 @@ function _showmenu() {
 
 function _fresh_install() {
     _checkcommand curl && _checkcommand git
+    _basedevel
     _dconf
-    _setwlp
     _installfonts
     _zsh && _zshconfig && _omz
     _bashconfig
@@ -568,7 +575,7 @@ function _selective_install() {
 }
 
 # ------------------------------------------------------- Main ---------------------------------------------------------
-_checkroot
+# _checkroot
 
 _showmenu
 
@@ -579,4 +586,3 @@ elif [[ $INPUT -eq 2 ]]; then
 else
     exit 0
 fi
-
