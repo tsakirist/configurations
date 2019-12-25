@@ -215,7 +215,7 @@ function _vimrc() {
 
 function _nvim() {
     _print i "neovim"
-    _installp neovim
+    _installp neovim python-pynvim
 }
 
 function _nvimrc() {
