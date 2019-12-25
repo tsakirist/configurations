@@ -110,19 +110,19 @@ function _instally() {
 
 function _basedevel() {
     # Required to build packages from AUR
-    _install base-devel
+    _installp base-devel
 }
 
 function _yay() {
     # Aur/Pacman wrapper
     _print i "yay"
-    _install yay
+    _installp yay
 }
 
 function _gitconfig() {
-    _checkfile gitconfig
+    _checkfile git/gitconfig
     _print s ".gitconfig"
-    cp -v --backup=numbered gitconfig ~/.gitconfig
+    cp -v --backup=numbered git/gitconfig ~/.gitconfig
 }
 
 function _gitsofancy() {
@@ -134,21 +134,21 @@ function _gitsofancy() {
 }
 
 function _bashrc() {
-    _checkfile bashrc
+    _checkfile bash/bashrc
     _print s ".bashrc"
-    cp -v --backup=numbered bashrc ~/.bashrc
+    cp -v --backup=numbered bash/bashrc ~/.bashrc
 }
 
 function _bashaliases() {
-    _checkfile bash_aliases
+    _checkfile bash/bash_aliases
     _print s ".bash_aliases"
-    cp -v --backup=numbered bash_aliases ~/.bash_aliases
+    cp -v --backup=numbered bash/bash_aliases ~/.bash_aliases
 }
 
 function _bashfunctions() {
-    _checkfile bash_functions
+    _checkfile bash/bash_functions
     _print s ".bash_functions"
-    cp -v --backup=numbered bash_functions ~/.bash_functions
+    cp -v --backup=numbered bash/bash_functions ~/.bash_functions
 }
 
 function _bashconfig() {
@@ -157,7 +157,7 @@ function _bashconfig() {
 
 function _zsh() {
     _print i "zsh"
-    sudo pacman -S --needed --noconfirm zsh
+    _installp zsh
     local msg="Would you like to change the default shell to zsh?\nThis will issue 'chsh -s $(which zsh)' command."
     if (whiptail --title "Change shell" --yesno "${msg}" 8 78); then
         chsh -s $(which zsh)
@@ -165,21 +165,21 @@ function _zsh() {
 }
 
 function _zshrc() {
-    _checkfile zshrc
+    _checkfile zsh/zshrc
     _print s ".zshrc"
-    cp -v --backup=numbered zshrc ~/.zshrc
+    cp -v --backup=numbered zsh/zshrc ~/.zshrc
 }
 
 function _zshaliases() {
-    _checkfile zsh_aliases
+    _checkfile zsh/zsh_aliases
     _print s ".zsh_aliases"
-    cp -v --backup=numbered zsh_aliases ~/.zsh_aliases
+    cp -v --backup=numbered zsh/zsh_aliases ~/.zsh_aliases
 }
 
 function _zshfunctions () {
-    _checkfile zsh_functions
+    _checkfile zsh/zsh_functions
     _print s ".zsh_functions"
-    cp -v --backup=numbered zsh_functions ~/.zsh_functions
+    cp -v --backup=numbered zsh/zsh_functions ~/.zsh_functions
 }
 
 function _zshconfig() {
@@ -203,39 +203,39 @@ function _omz() {
 
 function _vim() {
     _print i "vim"
-    _install vim
+    _installp vim
 }
 
 function _vimrc() {
-    _checkfile vimrc
+    _checkfile neovim/vimrc
     _print s ".vimrc"
-    cp -v --backup=numbered vimrc ~/.vimrc
+    cp -v --backup=numbered neovim/vimrc ~/.vimrc
     vim +PlugInstall +qall
 }
 
 function _nvim() {
     _print i "neovim"
-    _install neovim
+    _installp neovim
 }
 
 function _nvimrc() {
-    _checkfile vimrc && _checkfile init.vim
+    _checkfile neovim/vimrc && _checkfile neovim/init.vim
     _print s ".vimrc and init.vim"
-    cp -v --backup=numbered vimrc ~/.vimrc
+    cp -v --backup=numbered neovim/vimrc ~/.vimrc
     mkdir -v -p ~/.config/nvim/
-    cp -v --backup=numbered init.vim ~/.config/nvim/
+    cp -v --backup=numbered neovim/init.vim ~/.config/nvim/
     nvim +PlugInstall +qall
 }
 
 function _tmux() {
     _print i "tmux"
-    _install tmux
+    _installp tmux
 }
 
 function _tmuxconfig() {
-    _checkfile tmux.conf
+    _checkfile tmux/tmux.conf
     _print s ".tmux.conf"
-    cp -v --backup=numbered tmux.conf ~/.tmux.conf
+    cp -v --backup=numbered tmux/tmux.conf ~/.tmux.conf
 }
 
 function _sublimetext() {
@@ -247,7 +247,7 @@ function _sublimetext() {
         | sudo tee -a /etc/pacman.conf
     fi
     # Update and upgrade everything
-    sudo pacman -Syu && _install sublime-text
+    sudo pacman -Syu && _installp sublime-text
 }
 
 function _sublimepkgctrl() {
@@ -430,9 +430,9 @@ function _installfonts() {
 }
 
 function _fzfconfig() {
-    _checkfile fzf.config
+    _checkfile fzf/fzf.config
     _print s "fzf configuration"
-    cp -v --backup=numbered fzf.config ~/.fzf.config
+    cp -v --backup=numbered fzf/fzf.config ~/.fzf.config
 }
 
 function _fzf() {
