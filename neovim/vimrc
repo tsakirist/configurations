@@ -22,27 +22,37 @@ call plug#begin('~/.vim/plugged')
 " Declare the list of plugins
 Plug 'joshdick/onedark.vim'
 Plug 'sjl/badwolf'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
 Plug 'sheerun/vim-polyglot'
 Plug 'vim-python/python-syntax'
 Plug 'octol/vim-cpp-enhanced-highlight'
-Plug 'scrooloose/nerdcommenter'
 Plug 'terryma/vim-multiple-cursors'
 Plug 'scrooloose/nerdtree'
-Plug 'mhinz/vim-signify'
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
+Plug 'scrooloose/nerdcommenter'
+Plug 'ryanoasis/vim-devicons'
 Plug 'Yggdroot/indentLine'
+Plug 'junegunn/goyo.vim'
+Plug 'dkprice/vim-easygrep'
+Plug 'tpope/vim-surround'
+Plug 'jiangmiao/auto-pairs'
+Plug 'inside/vim-search-pulse'
+Plug 'mhinz/vim-signify'
+Plug 'tpope/vim-fugitive'
 
+Plug 'junegunn/fzf.vim'
+Plug '~/.fzf'
+
+Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+
+" Plug 'mhinz/vim-startify'
 " Plug 'neoclide/coc.nvim', {'do': { -> coc#util#install()}}
-
-" Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-" Plug 'deoplete-plugins/deoplete-jedi'
 " Plug 'ervandew/supertab'
 
 " List ends here. Plugins become visible to Vim after this call
 call plug#end()
 
-" ------------------------------------- General Configurations ------------------------------------
+" --------------------------------------- Utility Functions ---------------------------------------
 
 " Function to zoom-in and zoom-out from a window
 function! s:ZoomToggle() abort
@@ -71,19 +81,25 @@ function! SearchWord(word)
     normal n
 endfunction
 
-" Coloring configurations
+" ------------------------------------- General Configurations ------------------------------------
+
+" Syntax highlighting
 syntax on
 silent! colorscheme onedark
 " silent! colorscheme badwolf
-
 "highlight LineNr term=bold cterm=None ctermfg=Red ctermbg=None
+
+" Set true colors inside neovim
+set termguicolors
+
+" Highlight the current line and also highlight the column @120 (ruler)
+set colorcolumn=120
+highlight colorcolumn ctermbg=black
+set cursorline
 
 " This displays the line numbers and controls the number of columns used for the line number
 set number
 set numberwidth=1
-
-" This is used to control the Ctrl + C command and copy to the system's clipboard
-set clipboard=unnamedplus
 
 " Insert spaces when <Tab> is pressed. With this option set, if you want to enter a real tab character use Ctrl-V<Tab>
 " key sequence
@@ -101,10 +117,8 @@ set ignorecase
 " This makes searches with a single capital letter to be case sensitive
 set smartcase
 
-" Highlight the current line and also highlight the column @120 (ruler)
-set colorcolumn=120
-highlight colorcolumn ctermbg=black
-set cursorline
+" This highlights the search pattern as you type
+set incsearch
 
 " Open windows always below or right
 set splitbelow
@@ -112,6 +126,13 @@ set splitright
 
 " Set the maximum text width before vim automatically wraps it
 set textwidth=120
+
+" Set default encoding
+set encoding=UTF-8
+
+" This is used to control the Ctrl + C command and copy to the system's clipboard
+" set clipboard+=unnamedplus
+set clipboard^=unnamed,unnamedplus
 
 " Format options configuration:
 " 't' is required in format options to wrap text in insert mode
@@ -138,8 +159,9 @@ augroup TerminalConfigs
     autocmd TermOpen * setlocal nonumber norelativenumber
 augroup END
 
-" Change linenumber coloring to white
+" Change linenumber coloring to white for onedark
 augroup colorset
+    " Clear old autocommands of this group
     autocmd!
     let s:white = { "gui": "#ABB2BF", "cterm": "145", "cterm16" : "7" }
     autocmd ColorScheme * call onedark#set_highlight("LineNr", { "fg": s:white })
@@ -148,16 +170,73 @@ augroup END
 " Open NERDTree automatically when vim starts
 "autocmd vimenter * NERDTree
 "
-" Add space after commenting with NerdCommenter
+
+" Nerd Commenter configuration options
+" -------------------------------------
+" Add spaces after comment delimiters by default
 let g:NERDSpaceDelims=1
 
+" Allow commenting and inverting empty lines (useful when commenting a region)
+let g:NERDCommentEmptyLines=1
+
+" Enable trimming of trailing whitespace when uncommenting
+let g:NERDTrimTrailingWhitespace=1
+
+" Goyo distraction free mode configuration options
+" ------------------------------------------------
+let g:goyo_width="80%"
+let g:goyo_height="85%"
+let g:goyo_linenr=0
+
+" Vim-Signify configuration options
+" ---------------------------------
 " Change the delete sign of git-signify from '_' to '-'
 let g:signify_sign_delete='-'
 
-" let g:airline_theme='term'
-let g:airline_theme='solarized_flood'
+" Airline configuration options
+" -----------------------------
+" Change airline theme
+let g:airline_theme='onedark'
+
+" Enable tabline extension
+let g:airline#extensions#tabline#enabled=1
+
+" Add powerline fonts to populate powerline symbols
+let g:airline_powerline_fonts=1
+
+" Change the tabline separators
+" let g:airline#extensions#tabline#left_sep=' '
+" let g:airline#extensions#tabline#left_alt_sep='|'
+
+" Deoplete configuration options
+" ------------------------------
+" Enable deoplete autocompletion
+let g:deoplete#enable_at_startup=1
+
+" EasyGrep configuration options
+" ------------------------------
+" Make EasyGrep search only in the current buffer
+let g:EasyGrepMode=1
+let g:EasyGrepSearchCurrentBufferOnly=1
+let g:EasyGrepIgnoreCase=0
 
 " ------------------------------------------ Keybindings ------------------------------------------
+
+" Toggle line numbers
+nnoremap <silent> <leader>l :set nu!<CR>
+
+" Toggle Goyo - distraction free writing
+nnoremap <silent> <F1> :Goyo<CR>
+nnoremap <silent> <leader>1 :Goyo<CR>
+
+" Toggle between folds
+nnoremap <expr> <F2> &foldlevel ? 'zM' :'zR'
+
+" Set this keyboard combination to toggle NERDTree, it's the same as Sublime Text 3
+map <silent> <C-k><C-b> :NERDTreeToggle<CR>
+
+" Set Ctrl-t to jump to next occurence of the word under cursor
+nnoremap <silent> <C-t> *
 
 " Keybinds to move lines like sublime text 3
 " https://vim.fandom.com/wiki/Moving_lines_up_or_down
@@ -180,33 +259,35 @@ vnoremap <leader>d <Esc>m`yyp``<CR>
 " Hitting ESC when inside a :term to get into normal mode
 tnoremap <Esc> <C-\><C-N>
 
-" Set this keyboard combination to toggle NERDTree, it's the same as Sublime Text 3
-map <silent> <C-k><C-b> :NERDTreeToggle<CR>
-
 " Insert a blank line with <leader>Enter without leaving normal mode
 nnoremap <silent> <leader><CR> o<Esc>
 
-" Save files with ctrl+s
+" Save files with ctrl+s in every mode
 nnoremap <C-s> :w<CR>
 inoremap <C-s> <Esc>:w<CR>
 vnoremap <C-s> <Esc>:w<CR>
 
+" Keymaps to quit current buffer with ctrl+q
+nnoremap <silent> <C-q> <Esc>:q<CR>
+inoremap <silent> <C-q> <Esc>:q<CR>
+vnoremap <silent> <C-q> <Esc>:q<CR>
+
+" Keymap to quit all buffers with shift+q
+nnoremap <silent> <S-q> <Esc>:qa<CR>
+
 " Easiliy toggle comments @NERDCommenter
 map <leader><leader> <leader>c<Space><CR>
+
 " Toggling comment in insert mode keeps insert mode :startinsert
 imap <leader><leader> <Esc><leader>c<Space>:startinsert<CR>
 
 " Clear highlighting with escape when in normal mode
-nnoremap <silent> <esc> :noh<return><esc>
-nnoremap <silent> <esc>^[ <esc>^[
+" https://stackoverflow.com/a/1037182/6654329
+nnoremap <silent> <Esc> :noh<return><Esc>
+nnoremap <silent> <Esc>^[ <Esc>^[
 
 " Keymap to source the vimrc automatically
 nnoremap <silent> <leader>sc :source $MYVIMRC<CR>
-
-" Keymaps to quit current buffer with Ctrl+q
-nnoremap <silent> <C-q> <Esc>:q<CR>
-inoremap <silent> <C-q> <Esc>:q<CR>
-vnoremap <silent> <C-q> <Esc>:q<CR>
 
 " Commands/Keymaps to open terminals horizontally and vertically
 command! -nargs=* HT split  | terminal <args>
@@ -225,9 +306,38 @@ nnoremap <silent> <leader>z :ZoomToggle<CR>
 
 " Add mouse support and change the default mouse scrolling wheel options
 set mouse=a
+nnoremap <ScrollWheelUp>   4<C-y>
 nnoremap <ScrollWheelDown> 4<C-e>
 xnoremap <ScrollWheelUp>   4<C-y>
 xnoremap <ScrollWheelDown> 4<C-e>
 
+" Git-signify keybinds to use the plugin more easily
+nnoremap <silent> <leader>gh :SignifyToggleHighlight<CR>
+nnoremap <silent> <leader>gf :SignifyFold<CR>
+nnoremap <silent> <leader>gd :SignifyDiff<CR>
+
+" Deoplete keybindings
+" --------------------
+" Use <Tab> and <S-Tab> to navigate through the autocomplete options
+inoremap <silent> <expr> <Tab>   pumvisible() ? "\<C-n>" : "\<Tab>"
+inoremap <silent> <expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
+
+" Don't insert a newline after choosing an option with <Enter>
+inoremap <silent> <expr> <CR>    pumvisible() ? "\<C-y>" : "\<CR>"
+
 " ---------------------------------------- COC Intelisense ----------------------------------------
 " source ~/.vim/coc/coc.config.vim
+
+" ----------------------------------- FZF Plugins Configuration -----------------------------------
+command! -bang -nargs=? -complete=dir Files
+    \ call fzf#vim#files(<q-args>, fzf#vim#with_preview({'options': ['--layout=reverse', '--info=inline']}), <bang>0)
+
+function! RipgrepFzf(query, fullscreen)
+    let command_fmt = 'rg --column --line-number --no-heading --color=always --smart-case %s || true'
+    let initial_command = printf(command_fmt, shellescape(a:query))
+    let reload_command = printf(command_fmt, '{q}')
+    let spec = {'options': ['--phony', '--query', a:query, '--bind', 'change:reload:'.reload_command]}
+    call fzf#vim#grep(initial_command, 1, fzf#vim#with_preview(spec), a:fullscreen)
+endfunction
+
+command! -nargs=* -bang Rg call RipgrepFzf(<q-args>, <bang>0)

@@ -62,3 +62,6 @@ alias nv='nvim -p'
 alias nvi='nvim -p'
 alias nvim='nvim -p'
 alias nvv='nvim ~/.vimrc'
+
+# Shorten the name to just gotop
+alias gotop='gotop-cjbassi -c monokai'

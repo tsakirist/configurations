@@ -1,23 +1,20 @@
 [alias]
-	lg = log --graph --pretty=format:'%C(bold red)%h%Creset -%C(yellow bold)%d%Creset %s %C(bold green)(%cr) %C(bold cyan)<%an>%Creset' --abbrev-commit
+    lg = log --graph --pretty=format:'%C(bold red)%h%Creset -%C(yellow bold)%d%Creset %s %C(bold green)(%cr) %C(bold cyan)<%an>%Creset' --abbrev-commit
 
 [core]
-	pager = diff-so-fancy | less --tabs=4 -RFX
+    pager = diff-so-fancy | less --tabs=4 -RFX
 
 [color "diff"]
-	old = red bold
-	new = green bold
-	meta = yellow bold
-	commit = green bold
-	frag = magenta bold
-	whitespace = red reverse
+    old = red bold
+    new = green bold
+    meta = yellow bold
+    commit = green bold
+    frag = magenta bold
+    whitespace = red reverse
 
 [color "diff-highlight"]
-	oldNormal = red bold
-	oldHighlight = red bold 52
-	newNormal = green bold
-	newHighlight = green bold 22
+    oldNormal = red bold
+    oldHighlight = red bold 52
+    newNormal = green bold
+    newHighlight = green bold 22
 
-[user]
-	email = tsakiris@uth.gr
-	name = Tsakiris Tryfon

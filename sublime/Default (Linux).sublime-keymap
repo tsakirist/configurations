@@ -27,4 +27,10 @@
         "keys": ["ctrl+`"],
         "command": "toggle_terminus_panel"
     },
+    {
+        "keys": ["keypad_enter"],
+        "command": "find_next",
+        "context": [{"key": "panel", "operand": "find"}, {"key": "panel_has_focus"}]
+    },
+    { "keys": ["shift+enter"], "command": "insert", "args": {"characters": "\n"} }
 ]

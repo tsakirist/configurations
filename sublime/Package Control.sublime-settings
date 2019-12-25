@@ -6,10 +6,15 @@
     "installed_packages":
     [
         "A File Icon",
-        "MarkdownLivePreview",
-        "Package Control",
         "C++ Starting Kit",
         "CMakeEditor",
-        "Terminus"
+        "CUDA C++",
+        "EasyClangComplete",
+        "MarkdownLivePreview",
+        "Package Control",
+        "Seti_UI",
+        "Seti_UX",
+        "Terminus",
+        "Theme - Seti Monokai"
     ]
 }

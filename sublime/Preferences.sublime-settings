@@ -1,19 +1,20 @@
 {
-    "theme": "Adaptive.sublime-theme",
+    "bold_folder_labels": true,
     "color_scheme": "Packages/Color Scheme - Default/Monokai.sublime-color-scheme",
-    "font_size": 10.5,
+    "ensure_newline_at_eof_on_save": true,
     "font_face": "Fira Code Medium",
+    "font_size": 10.5,
+    "highlight_line": true,
     "ignored_packages":
     [
         "Vintage"
     ],
+    "overlay_scroll_bars": "enabled",
     "rulers":
     [
         120
     ],
-    "tab_size": 4,
     "show_encoding": true,
-    "bold_folder_labels": true,
-    "translate_tabs_to_spaces": true,
-    "ensure_newline_at_eof_on_save": true,
+    "theme": "Seti_orig.sublime-theme",
+    "translate_tabs_to_spaces": true
 }
