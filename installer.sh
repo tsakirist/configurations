@@ -13,14 +13,19 @@ ROWS=$(stty size | cut -d ' ' -f 1)
 bold=$(tput bold)
 start_underline=$(tput smul)
 end_underline=$(tput rmul)
-black=$(tput setaf 0)
-red=$(tput setaf 1)
+black_fg=$(tput setaf 0)
+red_fg=$(tput setaf 1)
+white_fg=$(tput setaf 7)
+green_fg=$(tput setaf 2)
+black_bg=$(tput setab 0)
 reset=$(tput sgr0)
 
 # ---------------------------------------------------- Symbols ---------------------------------------------------------
 
 thunder="\u2301"
 bullet="\u2022"
+cross="\u2718"
+tick="\u2714"
 
 # ---------------------------------------------------- Functions -------------------------------------------------------
 
@@ -32,7 +37,7 @@ function _backup() {
 function _reboot() {
     echo "It is recommended to ${bold}${red}reboot${reset} after a fresh install of the packages and configurations."
     read -n 1 -r -p "Would you like to reboot? [Y/n] " input
-    if [[ $input =~ ^([yY]) ]]; then
+    if [[ "$input" =~ ^([yY])$ ]]; then
         sudo reboot
     fi
 }
@@ -41,7 +46,7 @@ function _prompt() {
     local exec=false
     echo -e "${bullet} Do you want to download/install ${bold}${red}${1}${reset} [Y/n] "
     read -n 1 -s input
-    if [[ $input =~ ^([yY]) ]]; then
+    if [[ "$input" =~ ^([yY])$ ]]; then
         exec=true
     fi
     if [[ $exec == "true" ]]; then
@@ -61,7 +66,7 @@ function _checkfile() {
 function _checkcommand() {
     if ! command -v $1 > /dev/null 2>&1; then
         echo -e "${thunder} Installing required package ${bold}${red}${1}${reset} ..."
-        sudo pacman -S --needed --noconfirm $1
+        sudo pacman -S --needed --noconfirm $1 > /dev/null
     fi
 }
 
@@ -69,25 +74,13 @@ function _print() {
     local action
     if [[ $# -gt 1 ]]; then
         case "$1" in
-            "s" ) action="Setting" ;;
-            "i" ) action="Installing" ;;
-            "c" ) action="Changing" ;;
+            "s") action="Setting" ;;
+            "i") action="Installing" ;;
+            "c") action="Changing" ;;
         esac
-        echo -e "${thunder} ${action} ${bold}${red}${*:2}${reset} ..."
+        echo -e "${black_bg}${thunder} ${action} ${bold}${red_fg}${*:2}${white_fg} ...${reset}"
     fi
 }
-
-# Required to build packages from AUR
-function _basedevel() {
-    sudo pacman -S --needed --noconfirm base-devel > /dev/null 2>&1
-}
-
-# Aur/Pacman wrapper
-function _yay() {
-    _print i "yay"
-    sudo pacman -S --needed --noconfirm yay
-}
-
 
 function _change_shell() {
     local shell
@@ -102,6 +95,28 @@ function _change_shell() {
     chsh -s $(which ${shell})
     echo "In order for the ${start_underline}change${end_underline} to take effect you need to" \
          "${bold}${red}logout${reset}."
+}
+
+function _installp() {
+    # Install the packages with pacman and suppress any outputs to STDOUT
+    sudo pacman -S --needed --noconfirm "$@" > /dev/null
+}
+
+function _instally() {
+    # Install the packages with yay and suppress any outputs to STDOUT
+    _checkcommand yay && _basedevel
+    sudo yay -S --needed --noconfirm "$@" > /dev/null
+}
+
+function _basedevel() {
+    # Required to build packages from AUR
+    _install base-devel
+}
+
+function _yay() {
+    # Aur/Pacman wrapper
+    _print i "yay"
+    _install yay
 }
 
 function _gitconfig() {
@@ -179,15 +194,16 @@ function _omz() {
     # Install powerlevel10k theme
     git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $zsh_custom/themes/powerlevel10k
     # Install zsh autosuggestions
-    git clone https://github.com/zsh-users/zsh-autosuggestions $zsh_custom/plugins/zsh-autosuggestions
+    git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions $zsh_custom/plugins/zsh-autosuggestions
     # Install zsh syntax highlighting and apply a specific theme
-    git clone https://github.com/zdharma/fast-syntax-highlighting.git $zsh_custom/plugins/fast-syntax-highlighting
+    git clone --depth=1 https://github.com/zdharma/fast-syntax-highlighting.git \
+                        $zsh_custom/plugins/fast-syntax-highlighting
     _zshrc
 }
 
 function _vim() {
     _print i "vim"
-    sudo pacman -S --needed --noconfirm vim
+    _install vim
 }
 
 function _vimrc() {
@@ -199,7 +215,7 @@ function _vimrc() {
 
 function _nvim() {
     _print i "neovim"
-    sudo pacman -S --needed --noconfirm neovim
+    _install neovim
 }
 
 function _nvimrc() {
@@ -213,7 +229,7 @@ function _nvimrc() {
 
 function _tmux() {
     _print i "tmux"
-    sudo pacman -S --needed --noconfirm tmux
+    _install tmux
 }
 
 function _tmuxconfig() {
@@ -230,7 +246,23 @@ function _sublimetext() {
         echo -e "\n[sublime-text]\nServer = https://download.sublimetext.com/arch/stable/x86_64" \
         | sudo tee -a /etc/pacman.conf
     fi
-    sudo pacman -Syu sublime-text
+    # Update and upgrade everything
+    sudo pacman -Syu && _install sublime-text
+}
+
+function _sublimepkgctrl() {
+    # Create the necessary folder for Package Control and install it manually
+    if [ ! -f "${HOME}/.config/sublime-text-3/Installed Packages/Package Control.sublime-package" ]; then
+        wget -q "https://packagecontrol.io/Package%20Control.sublime-package" \
+             -P "${HOME}/.config/sublime-text-3/Installed Packages"
+    fi
+}
+
+function _sublimeinit() {
+    # Create some necessary folders in order to be able to copy settings
+    mkdir -v -p "${HOME}/.config/sublime-text-3/Installed Packages"
+    mkdir -v -p "${HOME}/.config/sublime-text-3/Packages/User/"
+    _sublimepkgctrl
 }
 
 function _sublimesettings() {
@@ -263,24 +295,22 @@ function _sublimeconfig() {
 
 function _vscode() {
     _print i "Visual Studio Code"
-    _checkcommand yay &&_basedevel
-    yay -S --noconfirm --needed visual-studio-code-bin 
+    _instally visual-studio-code-bin
 }
 
 function _googlechrome() {
     _print i "Google Chrome"
-    _checkcommand yay && _basedevel
-    yay -S --needed --noconfirm google-chrome
+    _instally google-chrome
 }
 
 function _neofetch() {
     _print i "neofetch"
-    sudo pacman -S --needed --noconfirm neofetch
+    _installp neofetch
 }
 
 function _xclip() {
     _print i "xclip"
-    sudo pacman -S --needed --noconfirm xclip
+    _installp xclip
 }
 
 function _powerline() {
@@ -288,8 +318,7 @@ function _powerline() {
     # sudo pacman -S --needed --noconfirm python-pip
     # pip install powerline-status
     # pip install powerline-gitstatus
-    sudo pacman -S --needed --noconfirm powerline
-    sudo pacman -S --needed --noconfirm powerline-fonts
+    _installp powerline powerline-fonts
 }
 
 function _powerlineconfig() {
@@ -322,37 +351,53 @@ function _dconf() {
 
 function _preload() {
     _print i "preload"
-    sudo pacman -S --needed --noconfirm preload
+    _installp preload
 }
 
 function _vmswappiness() {
-    _print c "vm.swappiness to 10"
-    local file="/etc/sysctl.d/100-vm-swappiness.conf"
-    if [ ! -f $file ]; then
-        echo "vm.swappiness=10" | sudo tee $file
-        sudo sysctl --system
+    local value=10
+    local file="/etc/sysctl.conf"
+    _print c "vm.swappiness to $value"
+    if grep -q "^vm.swappiness" $file; then
+        sudo sed -i "s/\(^vm.swappiness=\).*/\1$value/" $file
+    else
+        echo "vm.swappiness=${value}" | sudo tee -a $file > /dev/null 2>&1;
     fi
-    echo "Current swappiness value:" $(cat /proc/sys/vm/swappiness)
+    sudo sysctl -q --system
+    echo "Swappiness value:" $(cat /proc/sys/vm/swappiness)
 }
 
 function _cmake() {
     _print i "cmake"
-    sudo pacman -S --needed --noconfirm cmake
+    _installp cmake
 }
 
 function _tree() {
     _print i "tree"
-    sudo pacman -S --needed --noconfirm tree
+    _installp tree
 }
 
 function _htop() {
     _print i "htop"
-    sudo pacman -S --needed --noconfirm htop
+    _installp htop
+}
+
+function _gotop() {
+    _print i "gotop"
+    sudo snap install gotop-cjbassi
+    sudo snap connect gotop-cjbassi:hardware-observe
+    sudo snap connect gotop-cjbassi:mount-observe
+    sudo snap connect gotop-cjbassi:system-observe
+}
+
+function _activitymonitors() {
+    _htop
+    _gotop
 }
 
 function _gnometweaks() {
     _print i "gnome-tweaks"
-    sudo pacman -S --needed --noconfirm gnome-tweaks
+    _installp gnome-tweaks
 }
 
 function _gnomeshellextensions() {
@@ -362,26 +407,26 @@ function _gnomeshellextensions() {
 
 function _java() {
     _print i "java and javac"
-    sudo pacman -S --needed --noconfirm jdk-openjdk jre-openjdk
+    _installp jdk-openjdk jre-openjdk
 
 }
 
 function _tilix() {
     _print i "tilix: a terminal emulator"
-    sudo pacman -S --needed --noconfirm tilix
+    _installp tilix
 }
 
 function _setwlp() {
-    local path="wallpapers/1.jpg"
-    _checkfile $path
-    local file="'file://$(readlink -e "${path}")'"
+    local wlp="wallpapers/1.jpg" # my custom default wallpaper
+    _checkfile $wlp
+    local file="'file://$(readlink -e "${wlp}")'"
     _print s "Wallpaper ${FILE}"
     gsettings set org.gnome.desktop.background picture-uri "$file"
 }
 
 function _installfonts() {
     _print i "fonts"
-    sudo pacman -S --needed --noconfirm otf-fira-code
+    _installp otf-fira-code
 }
 
 function _fzfconfig() {
@@ -398,17 +443,17 @@ function _fzf() {
 
 function _fd() {
     _print i "fd: an improved version of find"
-    sudo pacman -S --needed --noconfirm fd
+    _installp fd
 }
 
 function _bat() {
     _print i "bat: a clone of cat with syntax highlighting"
-    sudo pacman -S --needed --noconfirm bat
+    _installp bat
 }
 
 function _rg() {
     _print i "rg: ripgrep recursive search for a pattern in files"
-    sudo pacman -S --needed --noconfirm ripgrep
+    _installp ripgrep
 }
 
 function _checkroot() {
@@ -424,52 +469,22 @@ function _checkroot() {
     fi
 }
 
+function _validateroot() {
+    # This function will validate user's timestamp without running any commnad
+    # It will prompt for password and keep it in cache, which is 15 mins by default
+    sudo -v
+}
+
 function _showmenu() {
     _checkcommand whiptail
-    local is_root="no"
-    if [ "$EUID" -eq 0 ]; then
-        is_root="yes"
-    fi
+    local INFO="---------------------- System Information -----------------------\n"
+    INFO+="$(hostnamectl | tail -n 3 | cut -c3-)"
     INPUT=$(whiptail --title "This script provides an easy way to install my packages and my configurations." \
-        --menu "\nScript is executed from $(pwd)" ${SIZE} $((ROWS-10)) \
-        "1"  "    Fresh installation" \
+        --menu "\nScript is executed from '$(pwd)'\n\n${INFO}" ${SIZE} 3 \
+        "1"  "    Fresh installation of everything" \
         "2"  "    Selective installation" \
         "Q"  "    Quit" \
         3>&1 1>&2 2>&3)
-}
-
-# ----------------------------------------------------- Installers -----------------------------------------------------
-
-function _fresh_install() {
-    _checkcommand curl && _checkcommand git
-    _basedevel
-    _dconf
-    _installfonts
-    _zsh && _zshconfig && _omz
-    _bashconfig
-    _tilix
-    _fzf && _fzfconfig
-    _fd
-    _bat
-    _rg
-    _nvim && _nvimrc
-    _tmux && _tmuxconfig
-    _xclip
-    _neofetch
-    _htop
-    _cmake
-    _tree
-    _gnometweaks
-    _gnomeshellextensions
-    _gitconfig && _gitsofancy
-    _powerline && _powerlineconfig
-    _java
-    _sublimetext && _sublimeconfig
-    _vscode
-    _googlechrome
-    _preload
-    _vmswappiness
-    _reboot
 }
 
 function _dconfgui() {
@@ -504,7 +519,7 @@ function _guimenu() {
         "15" "    tmux configuration" \
         "16" "    xclip" \
         "17" "    neofetch" \
-        "18" "    htop" \
+        "18" "    htop & gotop: activity monitors" \
         "19" "    cmake" \
         "20" "    tree" \
         "21" "    gnome-tweaks" \
@@ -524,6 +539,40 @@ function _guimenu() {
         "35" "    install fonts" \
         "Q"  "    Quit" \
         3>&1 1>&2 2>&3)
+}
+
+# ----------------------------------------------------- Installers -----------------------------------------------------
+
+function _fresh_install() {
+    _checkcommand curl && _checkcommand git
+    _installfonts
+    _zsh && _zshconfig && _omz
+    _bashconfig
+    _tilix
+    _fzf && _fzfconfig
+    _fd
+    _bat
+    _rg
+    _nvim && _nvimrc
+    _tmux && _tmuxconfig
+    _xclip
+    _neofetch
+    _activitymonitors
+    _cmake
+    _tree
+    _gnometweaks
+    _gnomeshellextensions
+    _gitconfig && _gitsofancy
+    _powerline && _powerlineconfig
+    _java
+    _sublimetext && _sublimeinit && _sublimeconfig
+    _vscode
+    _googlechrome
+    _preload
+    _vmswappiness
+    _dconf
+    # _setwlp
+    _reboot
 }
 
 function _selective_install() {
@@ -549,7 +598,7 @@ function _selective_install() {
             15) _tmuxconfig ;;
             16) _xclip ;;
             17) _neofetch ;;
-            18) _htop ;;
+            18) _activitymonitors ;;
             19) _cmake ;;
             20) _tree ;;
             21) _gnometweaks ;;
@@ -577,6 +626,7 @@ function _selective_install() {
 # ------------------------------------------------------- Main ---------------------------------------------------------
 # _checkroot
 
+_validateroot
 _showmenu
 
 if [[ $INPUT -eq 1 ]]; then
